@@ -1,0 +1,32 @@
+{% extends "outline.html" %}
+
+{% block head %}{% endblock %}
+
+{% block jscript %}
+
+{% endblock %}
+
+
+{% block content %}
+<div id="container" style="background-color:white; padding-left: 5%; padding-top 15%;padding-right: 5%;width:100%"> 
+
+<h3> Name </h3>
+  <div id="name" style="padding-left: 6%;">
+     <b>SMB Linux Stats </b>
+  </div>
+
+<h3> Description </h3>
+  <div id="description" style="padding-left: 6%;">
+        <b>SMB Linux Stats</b> is a stats dashboard and mining tool
+  </div>
+
+
+
+<h3> Source </h3>
+{% include 'source.html' %}
+
+
+</div> <!-- end container div -->
+
+{% endblock %}
+

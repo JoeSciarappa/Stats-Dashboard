@@ -1,0 +1,548 @@
+{% extends "outline.html" %}
+
+{% block head %}
+
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: center;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+</style>
+
+{% endblock %}
+
+{% block jscript %}
+
+{% if cptWatchdogs != None and cptSpattlecock != None and cptPorkchopexpress != None %}
+$(function () {
+	$('#CallsPerTeam').highcharts({
+		chart: {
+			plotBackgroundColor: null,
+			plotBorderWidth: null,
+			plotShadow: false,
+			type: 'pie'
+		},
+		title: {
+			text: 'Percent calls by team'
+		},
+		tooltip: {
+			pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+		},
+		plotOptions: {
+			pie: {
+				allowPointSelect: true,
+				cursor: 'pointer',
+				dataLabels: {
+					enabled: true,
+					format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+					style: {
+						color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+					}
+				}
+			}
+		},
+		series: [{
+			name: 'Teams',
+			colorByPoint: true,
+			data: [{
+				name: 'Watchdogs',
+				y: {{ cptWatchdogs | safe}},
+				color: "#5D6D7E"
+			}, {
+				name: 'Spattlecock',
+				y: {{ cptSpattlecock | safe }},
+				color: "#785A66"
+			},{
+				name: 'Porkchop Express',
+				y: {{ cptPorkchopexpress | safe }},
+				color: "#B7DCD8"
+
+			}]
+		}]
+	});
+});
+{% endif %}
+{% if ptptWatchdogs != None and ptptSpattlecock != None and ptptPorkchopexpress != None %}
+$(function () {
+        $('#PublicTicketsPerTeam').highcharts({
+                chart: {
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false,
+                        type: 'pie'
+                },
+                title: {
+                        text: 'Percent public tickets per team'
+                },
+                tooltip: {
+                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                },
+                plotOptions: {
+                        pie: {
+                                allowPointSelect: true,
+                                cursor: 'pointer',
+                                dataLabels: {
+                                        enabled: true,
+                                        format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                        style: {
+                                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                        }
+                                }
+                        }
+                },
+                series: [{
+                        name: 'Teams',
+                        colorByPoint: true,
+                        data: [{
+                                name: 'Watchdogs',
+                                y: {{ ptptWatchdogs | safe}},
+				color: "#5D6D7E"
+                        }, {
+                                name: 'Spattlecock',
+                                y: {{ ptptSpattlecock | safe }},
+				color: "#785A66"
+                        },{
+                                name: 'Porkchop Express',
+                                y: {{ ptptPorkchopexpress | safe }},
+				color: "#B7DCD8"
+                        }]
+                }] 
+        });
+});
+{% endif %}
+{% if cplL1 != None and cplL2 != None %}
+$(function () {
+        $('#CallsPerLevel').highcharts({
+                chart: {
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false,
+                        type: 'pie'
+                },
+                title: {
+                        text: 'Percent calls per level'
+                },
+                tooltip: {
+                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                },
+                plotOptions: {
+                        pie: {
+                                allowPointSelect: true,
+                                cursor: 'pointer',
+                                dataLabels: {
+                                        enabled: true,
+                                        format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                        style: {
+                                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                        }
+                                }
+                        }
+                },
+                series: [{
+                        name: 'Teams',
+                        colorByPoint: true,
+                        data: [{
+                                name: 'Level 1',
+				color: '#588C7E',
+                                y: {{ cplL1 | safe }} 
+                        }, {
+                                name: 'Level 2',
+				color: '#004f99',
+                                y: {{ cplL2 | safe }}
+                        }]
+                }]
+        });
+});
+{% endif %}
+{% if ptplL1 != None and ptplL2 != None %}
+$(function () {
+        $('#PublicTicketsPerLevel').highcharts({
+                chart: {
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false,
+                        type: 'pie'
+                },
+                title: {
+                        text: 'Percent public ticket per level'
+                },
+                tooltip: {
+                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                },
+                plotOptions: {
+                        pie: {
+                                allowPointSelect: true,
+                                cursor: 'pointer',
+                                dataLabels: {
+                                        enabled: true,
+                                        format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                        style: {
+                                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                        }
+                                }
+                        }
+                },
+                series: [{
+                        name: 'Teams',
+                        colorByPoint: true,
+                        data: [{
+                                name: 'Level 1',
+				color: '#588C7E',
+                                y: {{ ptplL1 | safe }}
+                        }, {
+                                name: 'Level 2',
+				color: '#004f99',
+                                y: {{ ptplL2 | safe }}
+                        }]
+                }]
+        });
+});
+{% endif %}
+{% if cleader1Name and cleader1Calls != None and cleader1Team and cleader2Name and cleader2Calls != None and cleader2Team and cleader3Name and cleader3Calls !=None and cleader3Team %}
+$(function () {
+		$("#1callname").html('{{ cleader1Name | safe }}');
+		$("#1calls").html('{{ cleader1Calls | safe }}');
+		$("#1callteam").html('{{ cleader1Team | safe }}');
+
+		$("#2callname").html('{{ cleader2Name | safe }}');
+		$("#2calls").html('{{ cleader2Calls | safe }}');
+		$("#2callteam").html('{{ cleader2Team | safe }}');
+
+		$("#3callname").html('{{ cleader3Name | safe }}');
+		$("#3calls").html('{{ cleader3Calls | safe }}');
+		$("#3callteam").html('{{ cleader3Team | safe }}');
+
+});
+{% endif %}
+{% if tleader1Name and tleader1Tickets != None and tleader1Team and tleader2Name and tleader2Tickets != None and tleader2Team and tleader3Name and tleader3Tickets != None and tleader3Team %}
+$(function () {
+                $("#1ticketname").html('{{ tleader1Name | safe }}');
+                $("#1tickets").html('{{ tleader1Tickets | safe }}');
+                $("#1ticketteam").html('{{ tleader1Team | safe }}');
+
+                $("#2ticketname").html('{{ tleader2Name | safe }}');
+                $("#2tickets").html('{{ tleader2Tickets | safe }}');
+                $("#2ticketteam").html('{{ tleader2Team | safe }}');
+
+                $("#3ticketname").html('{{ tleader3Name | safe }}');
+                $("#3tickets").html('{{ tleader3Tickets | safe }}');
+                $("#3ticketteam").html('{{ tleader3Team | safe }}');
+
+
+
+});
+{% endif %}
+
+{% if tmasterList %}
+
+$(function () {
+        $('#TicketBarGraph').highcharts({
+                chart: {
+                        type: 'column'
+                },
+                title: {
+                        text: 'Ticket Count By Racker'
+                },
+                subtitle: {
+                        text: 'sum of public updates for dedicated and cloud tickets'
+                },
+                xAxis: {
+                        type: 'category',
+                        labels: {
+                                rotation: -45,
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                },
+                yAxis: {
+                        min: 0,
+                        title: {
+                                text: 'Public Ticket Updates'
+                        }
+                },
+                legend: {
+                        enabled: false
+                },
+                series: [{
+                        name: 'Public Updates',
+                        data:
+
+			{{ tmasterList | safe}} 
+
+                        ,
+                        dataLabels: {
+                                enabled: true,
+                                rotation: -90,
+                                color: '#FFFFFF',
+                                align: 'right',
+                                format: '{point.y}',
+                                y: 10, // 10 pixels down from the top
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                }]
+        });
+});
+
+{% endif %}
+
+{% if cmasterList %}
+$(function() {
+
+        $('#CallBarGraph').highcharts({
+                chart: {
+                        type: 'column'
+                },
+                title: {
+                        text: 'Call Count By Racker'
+                },
+                subtitle: {
+                        text: 'number of calls each Racker fielded'
+                },
+                xAxis: {
+                        type: 'category',
+                        labels: {
+                                rotation: -45,
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                },
+                yAxis: {
+                        min: 0,
+                        title: {
+                                text: 'Calls'
+                        }
+                },
+                legend: {
+                        enabled: false
+                },
+                series: [{
+                        name: 'Calls',
+                        data:
+
+                        {{ cmasterList | safe }} 
+
+                        ,
+                        dataLabels: {
+                                enabled: true,
+                                rotation: -90,
+                                color: '#FFFFFF',
+                                align: 'right',
+                                format: '{point.y}',
+                                y: 10, // 10 pixels down from the top
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                }]
+        }); 
+});
+
+{% endif %}
+
+{% if acprptmasterList %}
+$(function() {
+
+        $('#acprpt').highcharts({
+                chart: {
+                        type: 'column'
+                },
+                title: {
+                        text: 'Average Calls Per Racker Per Team'
+                },
+                subtitle: {
+                        text: 'the average number of calls each Racker took per team'
+                },
+                xAxis: {
+                        type: 'category',
+                        labels: {
+                                rotation: -45,
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                },
+                yAxis: {
+                        min: 0,
+                        title: {
+                                text: 'Calls'
+                        }
+                },
+                legend: {
+                        enabled: false
+                },
+                series: [{
+                        name: 'Average Calls',
+                        data:
+
+                        {{ acprptmasterList | safe }}
+
+                        ,
+                        dataLabels: {
+                                enabled: true,
+                                rotation: -90,
+                                color: '#FFFFFF',
+                                align: 'right',
+                                format: '{point.y}',
+                                y: 10, // 10 pixels down from the top
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                }]
+        });
+});
+
+{% endif %}
+
+
+{% if atprptmasterList %}
+$(function() {
+
+        $('#atprpt').highcharts({
+                chart: {
+                        type: 'column'
+                },
+                title: {
+                        text: 'Average Tickets Per Racker Per Team'
+                },
+                subtitle: {
+                        text: 'the average number of tickets each Racker took per team'
+                },
+                xAxis: {
+                        type: 'category',
+                        labels: {
+                                rotation: -45,
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                },
+                yAxis: {
+                        min: 0,
+                        title: {
+                                text: 'Average Tickets'
+                        }
+                },
+                legend: {
+                        enabled: false
+                },
+                series: [{
+                        name: 'Average Tickets',
+                        data:
+
+                        {{ atprptmasterList | safe }}
+
+                        ,
+                        dataLabels: {
+                                enabled: true,
+                                rotation: -90,
+                                color: '#FFFFFF',
+                                align: 'right',
+                                format: '{point.y}',
+                                y: 10, // 10 pixels down from the top
+                                style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                }
+                        }
+                }]
+        });
+});
+
+{% endif %}
+
+
+{% endblock %}
+
+
+{% block content %}
+<div id="container" style="padding-left: 5%; padding-top: 1%;padding-right: 5%;width:100%"> 
+
+<form method="post">
+<input type="text" placeholder="Start Date - mm/dd/yyyy" name="sdate" type="text" />
+<input type="text" placeholder="End Date - mm/dd/yyyy" name="edate" type="text" />
+<input type="submit" value="Submit" />
+</form>
+
+
+
+                <h1 style="text-align: center; padding-top: 1%"> SMB Linux Stats </br>{% if sdate and edate %} {{ sdate }} to {{ edate }} {% endif %}</h1>
+
+<div id="leaderboard" style="display:table;width:100%;height:100%; padding-top: 5%">
+
+
+                <div style="width:48%;display:table;float:left">
+
+                 <p style="text-align: center;font-size: 125%"> Phone Leaderboard</p>
+                <table style="margin: 0 auto;">
+                <tr><th>Name</th><th>Calls</th><th>Team</th></tr>
+                <tr><td id="1callname"></td><td id="1calls"></td><td id="1callteam"></td></tr>
+                <tr><td id="2callname"></td><td id="2calls"></td><td id="2callteam"></td></tr>
+                <tr><td id="3callname"></td><td id="3calls"></td><td id="3callteam"></td></tr>
+               </table>
+                </div>
+
+                <div style="width:48%;display:table;float:right">
+                <p style="text-align: center;font-size: 125%"> Ticket Leaderboard</p>
+                <table style="margin: 0 auto;">
+                <tr><th>Name</th><th>Tickets</th><th>Team</th></tr>
+                <tr><td id="1ticketname"></td><td id="1tickets"></td><td id="1ticketteam"></td></tr>
+                <tr><td id="2ticketname"></td><td id="2tickets"></td><td id="2ticketteam"></td></tr>
+                <tr><td id="3ticketname"></td><td id="3tickets"></td><td id="3ticketteam"></td></tr>
+               </table>
+                </div>
+
+
+</div>
+
+<div style="padding-top:3%">
+
+        <div id="CallBarGraph" > </div>
+        <div id="TicketBarGraph"> </div>
+</div>
+<div style="padding-top:3%">
+
+        <div id="acprpt" style="width:48%;float:left;"> </div>
+        <div id="atprpt" style="width:48%;float:right;"> </div>
+
+
+
+
+        <div id="CallsPerTeam" style="padding-top:3%;width:49%;float:left"> </div>
+        <div id="PublicTicketsPerTeam" style="padding-top:3%;width:49%;float:right"> </div>
+
+
+        <div id="CallsPerLevel" style="padding-top:5%;width:49%;float:left"> </div>
+        <div id="PublicTicketsPerLevel" style="padding-top:5%;width:49%;float:right"> </div>
+
+</div>
+
+
+
+</div> <!-- end container div -->
+
+{% endblock %}
+

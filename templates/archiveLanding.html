@@ -1,0 +1,41 @@
+{% extends "outline.html" %}
+
+{% block head %}
+
+<style>
+
+</style>
+
+{% endblock %}
+
+{% block jscript %}
+
+
+{% endblock %}
+
+
+{% block content %}
+<div id="container" style="padding-left: 5%; padding-top: 1%;padding-right: 5%;width:100%"> 
+
+{% if errorMessage %}
+<h2 style="text-align: left">
+{{ errorMessage }}
+</h2>
+{% endif %}
+
+
+<form method="post">
+<input type="text" placeholder="Start Date - mm/dd/yyyy" name="sdate" type="text" />
+<input type="text" placeholder="End Date - mm/dd/yyyy" name="edate" type="text" />
+<input type="submit" value="Submit" />
+</form>
+
+<div style="padding-top:1%">
+<p> Note: Oldest day in archive is 10/01/2016 </p>
+
+</div>
+
+</div> <!-- end container div -->
+
+{% endblock %}
+

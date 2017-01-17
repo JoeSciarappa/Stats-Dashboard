@@ -1,0 +1,736 @@
+<div class="highlight" style="background: #f0f0f0"><pre style="line-height: 125%"><span style="color: #007020; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">flask</span> <span style="color: #007020; font-weight: bold">import</span> Flask, render_template,request,flash,redirect,url_for, Markup, jsonify
+<span style="color: #007020; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">collections</span> <span style="color: #007020; font-weight: bold">import</span> defaultdict
+<span style="color: #007020; font-weight: bold">from</span> <span style="color: #0e84b5; font-weight: bold">datetime</span> <span style="color: #007020; font-weight: bold">import</span> datetime <span style="color: #007020; font-weight: bold">as</span> dt
+<span style="color: #007020; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">mysql.connector</span> <span style="color: #007020; font-weight: bold">as</span> <span style="color: #0e84b5; font-weight: bold">mariadb</span>
+<span style="color: #007020; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">datetime</span>
+<span style="color: #007020; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">random</span>
+<span style="color: #007020; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">json</span>
+app <span style="color: #666666">=</span> Flask(__name__)
+
+
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/&quot;</span>, methods<span style="color: #666666">=</span>[<span style="color: #4070a0">&#39;GET&#39;</span>])
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">stats</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;select count(*) as ifrows from smb_linux where date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span><span style="color: #666666">%</span>(curDate))
+	ifrow <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;ifrows&#39;</span>]
+	
+	mariadb_connection<span style="color: #666666">.</span>close()
+
+
+	<span style="color: #007020; font-weight: bold">if</span> request<span style="color: #666666">.</span>method <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;GET&#39;</span>:
+		<span style="color: #007020; font-weight: bold">return</span> render_template(<span style="color: #4070a0">&#39;master.html&#39;</span>,ifrow<span style="color: #666666">=</span>ifrow)
+	<span style="color: #007020; font-weight: bold">else</span>:
+		<span style="color: #007020; font-weight: bold">return</span> render_template(<span style="color: #4070a0">&#39;outline.html&#39;</span>)
+
+	
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/PublicTicketsPerTeam&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">publicticketsperteam</span>():
+
+
+	curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today() 
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+	<span style="color: #60a0b0; font-style: italic">#MySQL</span>
+	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+	totalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+	<span style="color: #007020; font-weight: bold">if</span> totalPublicTickets <span style="color: #007020; font-weight: bold">is</span> <span style="color: #007020; font-weight: bold">not</span> <span style="color: #007020">None</span>:
+	
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE manager=&quot;Joe Kirby&quot; AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		watchdogsTotalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE manager=&quot;Steffen Heininger&quot; AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		spattlecocksTotalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+	
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE manager=&quot;Stacey Ford&quot; AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		porkchopexpressTotalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+
+		<span style="color: #60a0b0; font-style: italic">#Calculations</span>
+		watchdogs <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( watchdogsTotalPublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+		spattlecock <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( spattlecocksTotalPublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>), <span style="color: #40a070">2</span>)
+		porkchopexpress <span style="color: #666666">=</span> <span style="color: #007020">round</span>( ( porkchopexpressTotalPublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>,<span style="color: #40a070">2</span>)
+
+
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(watchdogs<span style="color: #666666">=</span>watchdogs, spattlecock<span style="color: #666666">=</span>spattlecock, porkchopexpress<span style="color: #666666">=</span>porkchopexpress)
+	<span style="color: #007020; font-weight: bold">else</span>: 
+                mariadb_connection<span style="color: #666666">.</span>close()
+                <span style="color: #007020; font-weight: bold">return</span> jsonify(watchdogs<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, spattlecock<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, porkchopexpress<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/CallsPerTeam&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">callsperteam</span>():
+
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+	<span style="color: #60a0b0; font-style: italic">#MySQL</span>
+       	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+	totalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+	<span style="color: #007020; font-weight: bold">if</span> totalCalls <span style="color: #007020; font-weight: bold">is</span> <span style="color: #007020; font-weight: bold">not</span> <span style="color: #007020">None</span>:
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND manager=&quot;Joe Kirby&quot; AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		watchdogsTotalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND manager=&quot;Stacey Ford&quot; AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		porkchopexpressTotalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND manager=&quot;Steffen Heininger&quot; AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		spattlecocksTotalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+
+	        <span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	watchdogs <span style="color: #666666">=</span> <span style="color: #007020">round</span> ( (( watchdogsTotalCalls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span> ),<span style="color: #40a070">2</span>)
+	        spattlecock <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( spattlecocksTotalCalls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+        	porkchopexpress <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( porkchopexpressTotalCalls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+	
+        	<span style="color: #007020; font-weight: bold">return</span> jsonify( watchdogs<span style="color: #666666">=</span>watchdogs, spattlecock<span style="color: #666666">=</span>spattlecock, porkchopexpress<span style="color: #666666">=</span>porkchopexpress )
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify( watchdogs<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, spattlecock<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, porkchopexpress<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span> )
+
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/PublicTicketsPerLevel&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">publicticketsperlevel</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+	totalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+	<span style="color: #007020; font-weight: bold">if</span> totalPublicTickets <span style="color: #007020; font-weight: bold">is</span> <span style="color: #007020; font-weight: bold">not</span> <span style="color: #007020">None</span>:
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE level=2 AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		l2PublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE level=1 AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		l1PublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+	        <span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	l1 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l1PublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+	        l2 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l2PublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span> ),<span style="color: #40a070">2</span>)
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+
+	        <span style="color: #007020; font-weight: bold">return</span> jsonify( l1<span style="color: #666666">=</span>l1, l2<span style="color: #666666">=</span>l2)
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close() 
+		<span style="color: #007020; font-weight: bold">return</span> jsonify( l1<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, l2<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/CallsPerLevel&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">callsperlevel</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+	totalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+	<span style="color: #007020; font-weight: bold">if</span> totalCalls <span style="color: #007020; font-weight: bold">is</span> <span style="color: #007020; font-weight: bold">not</span> <span style="color: #007020">None</span>:
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND level=2 AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		l2Calls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND level=1 AND date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+		l1Calls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+	        <span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	l1 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l1Calls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+	        l2 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l2Calls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+
+	        <span style="color: #007020; font-weight: bold">return</span> jsonify(l1<span style="color: #666666">=</span>l1, l2<span style="color: #666666">=</span>l2)
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(l1<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, l2<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/CallLeaderboard&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">callleaderboard</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, calls, manager FROM smb_linux WHERE date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; ORDER BY calls DESC LIMIT 3&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+
+
+	<span style="color: #007020; font-weight: bold">if</span> cursor<span style="color: #666666">.</span>rowcount <span style="color: #666666">!=</span> <span style="color: #40a070">0</span>:
+		loop<span style="color: #666666">=</span><span style="color: #40a070">1</span>
+		<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+			<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">1</span>:
+				leader1Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+				leader1Calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+				leader1Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+				<span style="color: #007020; font-weight: bold">if</span> leader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+					leader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+				<span style="color: #007020; font-weight: bold">elif</span> leader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+					leader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+				<span style="color: #007020; font-weight: bold">elif</span> leader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+					leader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">2</span>:
+                        	leader2Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+	                        leader2Calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+				leader2Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                	        <span style="color: #007020; font-weight: bold">if</span> leader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                        	        leader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+	                        <span style="color: #007020; font-weight: bold">elif</span> leader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+        	                        leader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                	        <span style="color: #007020; font-weight: bold">elif</span> leader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                        	        leader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+	                <span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">3</span>:
+        	                leader3Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                	        leader3Calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+				leader3Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+	                        <span style="color: #007020; font-weight: bold">if</span> leader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+        	                        leader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                	        <span style="color: #007020; font-weight: bold">elif</span> leader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                        	        leader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+	                        <span style="color: #007020; font-weight: bold">elif</span> leader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+        	                        leader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+			loop<span style="color: #666666">+=</span><span style="color: #40a070">1</span>
+
+		mariadb_connection<span style="color: #666666">.</span>close()		
+		<span style="color: #007020; font-weight: bold">return</span> jsonify( leader1Name<span style="color: #666666">=</span>leader1Name, leader1Calls<span style="color: #666666">=</span>leader1Calls, leader1Team<span style="color: #666666">=</span>leader1Team, leader2Name<span style="color: #666666">=</span>leader2Name, leader2Calls<span style="color: #666666">=</span>leader2Calls, leader2Team<span style="color: #666666">=</span>leader2Team, leader3Name<span style="color: #666666">=</span>leader3Name, leader3Calls<span style="color: #666666">=</span>leader3Calls, leader3Team<span style="color: #666666">=</span>leader3Team)
+
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify( leader1Name<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader1Calls<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader1Team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader2Name<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader2Calls<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader2Team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader3Name<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader3Calls<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader3Team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/TicketLeaderboard&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">ticketleaderboard</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, dedicated+cloud as tickets, manager FROM smb_linux WHERE date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; ORDER BY tickets DESC LIMIT 3&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+       
+	<span style="color: #007020; font-weight: bold">if</span> cursor<span style="color: #666666">.</span>rowcount <span style="color: #666666">!=</span> <span style="color: #40a070">0</span>: 
+	        loop<span style="color: #666666">=</span><span style="color: #40a070">1</span>
+        	<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">1</span>:
+                        	leader1Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+	                        leader1Tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+        	                leader1Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                	        <span style="color: #007020; font-weight: bold">if</span> leader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                        	        leader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+	                        <span style="color: #007020; font-weight: bold">elif</span> leader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+        	                        leader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                	        <span style="color: #007020; font-weight: bold">elif</span> leader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                        	        leader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+	                <span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">2</span>:
+        	                leader2Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                	        leader2Tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+                        	leader2Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+	                        <span style="color: #007020; font-weight: bold">if</span> leader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+        	                        leader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                	        <span style="color: #007020; font-weight: bold">elif</span> leader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                        	        leader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+	                        <span style="color: #007020; font-weight: bold">elif</span> leader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+        	                        leader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+	                <span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">3</span>:
+        	                leader3Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                	        leader3Tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+                        	leader3Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+	                        <span style="color: #007020; font-weight: bold">if</span> leader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+        	                        leader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                	        <span style="color: #007020; font-weight: bold">elif</span> leader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                        	        leader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+	                        <span style="color: #007020; font-weight: bold">elif</span> leader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+        	                        leader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+                	loop<span style="color: #666666">+=</span><span style="color: #40a070">1</span>
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+
+        	<span style="color: #007020; font-weight: bold">return</span> jsonify(leader1Name<span style="color: #666666">=</span>leader1Name, leader1Tickets<span style="color: #666666">=</span>leader1Tickets, leader1Team<span style="color: #666666">=</span>leader1Team, leader2Name<span style="color: #666666">=</span>leader2Name, leader2Tickets<span style="color: #666666">=</span>leader2Tickets, leader2Team<span style="color: #666666">=</span>leader2Team, leader3Name<span style="color: #666666">=</span>leader3Name, leader3Tickets<span style="color: #666666">=</span>leader3Tickets, leader3Team<span style="color: #666666">=</span>leader3Team)
+
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(leader1Name<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader1Tickets<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader1Team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader2Name<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader2Tickets<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader2Team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader3Name<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader3Tickets<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>, leader3Team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/TicketBarGraph&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">ticketbargraph</span>(): 
+ 
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+	masterList<span style="color: #666666">=</span>[]
+	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, dedicated+cloud as tickets, manager FROM smb_linux WHERE date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; ORDER BY tickets DESC&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+
+	<span style="color: #007020; font-weight: bold">if</span> cursor<span style="color: #666666">.</span>rowcount <span style="color: #666666">!=</span> <span style="color: #40a070">0</span>:
+		<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+			name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+			tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+			manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+
+        	        <span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+                	        color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+	                <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+        	                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+                	<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+	                <span style="color: #007020; font-weight: bold">else</span>:
+        	                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+
+	                rackerList<span style="color: #666666">=</span>{}
+        	        rackerList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> name
+                	rackerList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> color
+	                rackerList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> tickets
+
+			masterList<span style="color: #666666">.</span>append(rackerList)
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(TicketBarGraph<span style="color: #666666">=</span>masterList)
+
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(TicketBarGraph<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/CallBarGraph&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">callbargraph</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+
+        masterList<span style="color: #666666">=</span>[]
+        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, calls, manager FROM smb_linux WHERE date = &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; ORDER BY calls DESC&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+
+	<span style="color: #007020; font-weight: bold">if</span> cursor<span style="color: #666666">.</span>rowcount <span style="color: #666666">!=</span> <span style="color: #40a070">0</span>:
+	        <span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+        	        name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                	calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+	                manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+
+			<span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+			<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+			<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+			<span style="color: #007020; font-weight: bold">else</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+
+			rackerList<span style="color: #666666">=</span>{}
+			rackerList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> name
+			rackerList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> color
+			rackerList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> calls
+	
+			masterList<span style="color: #666666">.</span>append(rackerList)
+
+	        mariadb_connection<span style="color: #666666">.</span>close()
+
+        	<span style="color: #007020; font-weight: bold">return</span> jsonify(CallBarGraph<span style="color: #666666">=</span>masterList)
+	<span style="color: #007020; font-weight: bold">else</span>: 
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(CallBarGraph<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/AverageCallsPerRackerPerTeam&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">averagecallsperrackerperteam</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+	masterList<span style="color: #666666">=</span>[]
+	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT manager, SUM(calls) / count(name) as acprpt from smb_linux where calls!=-1 and date=&quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY manager ORDER BY acprpt DESC;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+
+	<span style="color: #007020; font-weight: bold">if</span> cursor<span style="color: #666666">.</span>rowcount <span style="color: #666666">!=</span> <span style="color: #40a070">0</span>:
+		<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+			acprpt <span style="color: #666666">=</span> <span style="color: #007020">round</span>(rackerDictionary[<span style="color: #4070a0">&#39;acprpt&#39;</span>],<span style="color: #40a070">2</span>)
+			manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+
+                        <span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+				team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Watchdogs&#39;</span>
+                        <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+				team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Porkchop Express&#39;</span>
+                        <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+				team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Spattlecock&#39;</span>
+                        <span style="color: #007020; font-weight: bold">else</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+
+                        teamList<span style="color: #666666">=</span>{}
+                        teamList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> color
+                        teamList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> acprpt
+			teamList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> team
+                        masterList<span style="color: #666666">.</span>append(teamList)
+
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(acprpt<span style="color: #666666">=</span>masterList)
+	<span style="color: #007020; font-weight: bold">else</span>:
+		mariadb_connection<span style="color: #666666">.</span>close()
+		<span style="color: #007020; font-weight: bold">return</span> jsonify(acprpt<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/AverageTicketsPerRackerPerTeam&quot;</span>)
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">averageticketsperrackerperteam</span>():
+
+        curDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>date<span style="color: #666666">.</span>today()
+
+        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+        masterList<span style="color: #666666">=</span>[]
+        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT manager, SUM(dedicated + cloud) / count(name) as atprpt from smb_linux where date=&quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY manager ORDER BY atprpt DESC;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (curDate))
+
+        <span style="color: #007020; font-weight: bold">if</span> cursor<span style="color: #666666">.</span>rowcount <span style="color: #666666">!=</span> <span style="color: #40a070">0</span>:
+                <span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                        atprpt <span style="color: #666666">=</span> <span style="color: #007020">round</span>(rackerDictionary[<span style="color: #4070a0">&#39;atprpt&#39;</span>],<span style="color: #40a070">2</span>)
+                        manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+
+                        <span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+                                team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Watchdogs&#39;</span>
+                        <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+                                team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Porkchop Express&#39;</span>
+                        <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+                                team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Spattlecock&#39;</span>
+                        <span style="color: #007020; font-weight: bold">else</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+
+                        teamList<span style="color: #666666">=</span>{}
+                        teamList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> color
+                        teamList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> atprpt
+			teamList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> team
+                        masterList<span style="color: #666666">.</span>append(teamList)
+
+                mariadb_connection<span style="color: #666666">.</span>close()
+                <span style="color: #007020; font-weight: bold">return</span> jsonify(atprpt<span style="color: #666666">=</span>masterList)
+        <span style="color: #007020; font-weight: bold">else</span>:
+                mariadb_connection<span style="color: #666666">.</span>close()
+                <span style="color: #007020; font-weight: bold">return</span> jsonify(atprpt<span style="color: #666666">=</span><span style="color: #4070a0">&#39;null&#39;</span>)
+
+
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/archive&quot;</span>, methods<span style="color: #666666">=</span>[<span style="color: #4070a0">&#39;GET&#39;</span>,<span style="color: #4070a0">&#39;POST&#39;</span>])
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">archive</span>():
+        <span style="color: #007020; font-weight: bold">if</span> request<span style="color: #666666">.</span>method <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;GET&#39;</span>:
+		<span style="color: #007020; font-weight: bold">return</span> render_template(<span style="color: #4070a0">&#39;archiveLanding.html&#39;</span>)
+	<span style="color: #007020; font-weight: bold">if</span> request<span style="color: #666666">.</span>method <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;POST&#39;</span>:
+
+		errorMessage<span style="color: #666666">=</span><span style="color: #4070a0">&#39;&#39;</span>
+
+		<span style="color: #007020; font-weight: bold">try</span>:
+			sDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>datetime<span style="color: #666666">.</span>strptime(<span style="color: #007020">str</span>(request<span style="color: #666666">.</span>form[<span style="color: #4070a0">&#39;sdate&#39;</span>]), <span style="color: #4070a0">&#39;%m/</span><span style="color: #70a0d0; font-style: italic">%d</span><span style="color: #4070a0">/%Y&#39;</span>)<span style="color: #666666">.</span>strftime(<span style="color: #4070a0">&#39;%Y-%m-</span><span style="color: #70a0d0; font-style: italic">%d</span><span style="color: #4070a0">&#39;</span>)
+                        eDate <span style="color: #666666">=</span> datetime<span style="color: #666666">.</span>datetime<span style="color: #666666">.</span>strptime(<span style="color: #007020">str</span>(request<span style="color: #666666">.</span>form[<span style="color: #4070a0">&#39;edate&#39;</span>]), <span style="color: #4070a0">&#39;%m/</span><span style="color: #70a0d0; font-style: italic">%d</span><span style="color: #4070a0">/%Y&#39;</span>)<span style="color: #666666">.</span>strftime(<span style="color: #4070a0">&#39;%Y-%m-</span><span style="color: #70a0d0; font-style: italic">%d</span><span style="color: #4070a0">&#39;</span>)
+
+		<span style="color: #007020; font-weight: bold">except</span> <span style="color: #007020">ValueError</span>:
+			errorMessage<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Input did not pass validation&#39;</span>	
+			<span style="color: #007020; font-weight: bold">return</span> render_template(<span style="color: #4070a0">&#39;archiveLanding.html&#39;</span>,errorMessage<span style="color: #666666">=</span>errorMessage)
+
+	        mariadb_connection <span style="color: #666666">=</span> mariadb<span style="color: #666666">.</span>connect(user<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>, password<span style="color: #666666">=</span><span style="color: #4070a0">&#39;<sanitized>&#39;</span>, database<span style="color: #666666">=</span><span style="color: #4070a0">&#39;stats&#39;</span>)
+        	cursor <span style="color: #666666">=</span> mariadb_connection<span style="color: #666666">.</span>cursor(buffered<span style="color: #666666">=</span><span style="color: #007020">True</span>, dictionary<span style="color: #666666">=</span><span style="color: #007020">True</span>)
+
+<span style="color: #60a0b0; font-style: italic">################PublicTicketsPerTeam</span>
+	        <span style="color: #60a0b0; font-style: italic">#MySQL</span>
+       		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	totalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE manager=&quot;Joe Kirby&quot; AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	watchdogsTotalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE manager=&quot;Steffen Heininger&quot; AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	spattlecocksTotalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE manager=&quot;Stacey Ford&quot; AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	porkchopexpressTotalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	<span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	ptptWatchdogs <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( watchdogsTotalPublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+        	ptptSpattlecock <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( spattlecocksTotalPublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>), <span style="color: #40a070">2</span>)
+        	ptptPorkchopexpress <span style="color: #666666">=</span> <span style="color: #007020">round</span>( ( porkchopexpressTotalPublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>,<span style="color: #40a070">2</span>)
+
+<span style="color: #60a0b0; font-style: italic">################CallsPerTeam</span>
+	        <span style="color: #60a0b0; font-style: italic">#MySQL</span>
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	totalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND manager=&quot;Joe Kirby&quot; AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	watchdogsTotalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND manager=&quot;Stacey Ford&quot; AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	porkchopexpressTotalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(calls) AS total FROM smb_linux WHERE calls != -1 AND manager=&quot;Steffen Heininger&quot; AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	spattlecocksTotalCalls <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+
+        	<span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	cptWatchdogs <span style="color: #666666">=</span> <span style="color: #007020">round</span> ( (( watchdogsTotalCalls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span> ),<span style="color: #40a070">2</span>)
+        	cptSpattlecock <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( spattlecocksTotalCalls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+        	cptPorkchopexpress <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( porkchopexpressTotalCalls <span style="color: #666666">/</span> totalCalls ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+
+<span style="color: #60a0b0; font-style: italic">################PublicTicketsPerLevel</span>
+		<span style="color: #60a0b0; font-style: italic">#MySQL</span>
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	totalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE level=2 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	l2PublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE level=1 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	l1PublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	<span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	ptplL1 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l1PublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+        	ptplL2 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l2PublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span> ),<span style="color: #40a070">2</span>)
+<span style="color: #60a0b0; font-style: italic">################CallsPerLevel</span>
+	        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+       		totalPublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE level=2 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	l2PublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT SUM(cloud) + SUM(dedicated) AS total FROM smb_linux WHERE level=1 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	l1PublicTickets <span style="color: #666666">=</span> cursor<span style="color: #666666">.</span>fetchone()[<span style="color: #4070a0">&#39;total&#39;</span>]
+
+        	<span style="color: #60a0b0; font-style: italic">#Calculations</span>
+        	cplL1 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l1PublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span>),<span style="color: #40a070">2</span>)
+        	cplL2 <span style="color: #666666">=</span> <span style="color: #007020">round</span>( (( l2PublicTickets <span style="color: #666666">/</span> totalPublicTickets ) <span style="color: #666666">*</span> <span style="color: #40a070">100</span> ),<span style="color: #40a070">2</span>)
+<span style="color: #60a0b0; font-style: italic">################CallLeaderboard</span>
+
+	        cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, SUM(calls) as calls, manager FROM smb_linux WHERE calls != -1 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY name ORDER BY calls DESC LIMIT 3&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+
+        	loop<span style="color: #666666">=</span><span style="color: #40a070">1</span>
+        	<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">1</span>:
+                        	cleader1Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                        	cleader1Calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+                        	cleader1Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        	<span style="color: #007020; font-weight: bold">if</span> cleader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                                	cleader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> cleader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                                	cleader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> cleader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                                	cleader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">2</span>:
+                        	cleader2Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                        	cleader2Calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+                        	cleader2Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        	<span style="color: #007020; font-weight: bold">if</span> cleader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                                	cleader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> cleader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                                	cleader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> cleader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                                	cleader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">3</span>:
+                        	cleader3Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                        	cleader3Calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+                        	cleader3Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        	<span style="color: #007020; font-weight: bold">if</span> cleader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                                	cleader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> cleader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                                	cleader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> cleader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                                	cleader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+                	loop<span style="color: #666666">+=</span><span style="color: #40a070">1</span>
+
+<span style="color: #60a0b0; font-style: italic">################TicketLeaderboard</span>
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, SUM(dedicated + cloud) as tickets, manager FROM smb_linux WHERE date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY name ORDER BY tickets DESC LIMIT 3&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+
+        	loop<span style="color: #666666">=</span><span style="color: #40a070">1</span>
+        	<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">1</span>:
+                        	tleader1Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                       		tleader1Tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+                        	tleader1Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        	<span style="color: #007020; font-weight: bold">if</span> tleader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                                	tleader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> tleader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                                	tleader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> tleader1Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                                	tleader1Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">2</span>:
+                        	tleader2Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                        	tleader2Tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+                        	tleader2Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        	<span style="color: #007020; font-weight: bold">if</span> tleader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                                	tleader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> tleader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                                	tleader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> tleader2Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                                	tleader2Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+                	<span style="color: #007020; font-weight: bold">if</span> loop <span style="color: #666666">==</span> <span style="color: #40a070">3</span>:
+                        	tleader3Name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                        	tleader3Tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+                        	tleader3Team <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        	<span style="color: #007020; font-weight: bold">if</span> tleader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Joe Kirby&quot;</span>:
+                                	tleader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Watchdogs&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> tleader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Stacey Ford&quot;</span>:
+                                	tleader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Porkchop Express&quot;</span>
+                        	<span style="color: #007020; font-weight: bold">elif</span> tleader3Team <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;Steffen Heininger&quot;</span>:
+                                	tleader3Team <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;Spattlecock&quot;</span>
+
+                	loop<span style="color: #666666">+=</span><span style="color: #40a070">1</span>
+<span style="color: #60a0b0; font-style: italic">################TicketBarGraph</span>
+        	tmasterList<span style="color: #666666">=</span>[]
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, SUM(dedicated + cloud) as tickets, manager FROM smb_linux WHERE date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY name ORDER BY tickets DESC LIMIT 30&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                	name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                	tickets <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;tickets&#39;</span>]
+                	manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+
+                	<span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+                	<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+                	<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+                	<span style="color: #007020; font-weight: bold">else</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+
+                	rackerList<span style="color: #666666">=</span>{}
+                	rackerList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> <span style="color: #007020">str</span>(name)
+                	rackerList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> <span style="color: #007020">str</span>(color)
+                	rackerList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> <span style="color: #007020">int</span>(tickets)
+
+                	tmasterList<span style="color: #666666">.</span>append(rackerList)
+
+
+
+<span style="color: #60a0b0; font-style: italic">################CallBarGraph</span>
+        	cmasterList<span style="color: #666666">=</span>[]
+        	cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT name, SUM(calls) as calls, manager FROM smb_linux WHERE calls != -1 AND date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY name ORDER BY calls DESC LIMIT 30&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        	<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                	name <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;name&#39;</span>]
+                	calls <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;calls&#39;</span>]
+                	manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+
+                	<span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+                	<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+                	<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+                	<span style="color: #007020; font-weight: bold">else</span>:
+                        	color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+
+                	rackerList<span style="color: #666666">=</span>{}
+                	rackerList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> <span style="color: #007020">str</span>(name)
+                	rackerList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> <span style="color: #007020">str</span>(color)
+                	rackerList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> <span style="color: #007020">int</span>(calls)
+
+                	cmasterList<span style="color: #666666">.</span>append(rackerList)
+
+
+<span style="color: #60a0b0; font-style: italic">################atprpt</span>
+		atprptmasterList<span style="color: #666666">=</span>[]
+		cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT manager, SUM(dedicated + cloud) / count(name) as atprpt from smb_linux where date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY manager ORDER BY atprpt DESC;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+
+		<span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+	                atprpt <span style="color: #666666">=</span> <span style="color: #007020">round</span>( rackerDictionary[<span style="color: #4070a0">&#39;atprpt&#39;</span>] ,<span style="color: #40a070">2</span>)
+			manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+			<span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+                                team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Watchdogs&#39;</span>
+			<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+                                team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Porkchop Express&#39;</span>
+			<span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+                                team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Spattlecock&#39;</span>
+			<span style="color: #007020; font-weight: bold">else</span>:
+				color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+			teamList<span style="color: #666666">=</span>{}
+			teamList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> color
+			teamList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> atprpt
+			teamList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> team
+
+			atprptmasterList<span style="color: #666666">.</span>append(teamList)
+
+
+<span style="color: #60a0b0; font-style: italic">##############acprpt</span>
+                acprptmasterList<span style="color: #666666">=</span>[]
+                cursor<span style="color: #666666">.</span>execute(<span style="color: #4070a0">&#39;&#39;&#39;SELECT manager, SUM(calls) / count(name) as acprpt from smb_linux where date BETWEEN &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; AND &quot;</span><span style="color: #70a0d0; font-style: italic">%s</span><span style="color: #4070a0">&quot; GROUP BY manager ORDER BY acprpt DESC;&#39;&#39;&#39;</span> <span style="color: #666666">%</span> (sDate,eDate))
+        
+                <span style="color: #007020; font-weight: bold">for</span> rackerDictionary <span style="color: #007020; font-weight: bold">in</span> cursor:
+                        acprpt <span style="color: #666666">=</span> <span style="color: #007020">round</span>( rackerDictionary[<span style="color: #4070a0">&#39;acprpt&#39;</span>] , <span style="color: #40a070">2</span>)
+                        manager <span style="color: #666666">=</span> rackerDictionary[<span style="color: #4070a0">&#39;manager&#39;</span>]
+                        <span style="color: #007020; font-weight: bold">if</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Joe Kirby&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#5D6D7E&#39;</span>
+				team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Watchdogs&#39;</span>
+                        <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Stacey Ford&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#B7DCD8&#39;</span>
+				team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Porkchop Express&#39;</span>
+                        <span style="color: #007020; font-weight: bold">elif</span> manager <span style="color: #666666">==</span> <span style="color: #4070a0">&#39;Steffen Heininger&#39;</span>:
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#785A66&#39;</span>
+				team<span style="color: #666666">=</span><span style="color: #4070a0">&#39;Spattlecock&#39;</span>
+                        <span style="color: #007020; font-weight: bold">else</span>:   
+                                color<span style="color: #666666">=</span><span style="color: #4070a0">&#39;#010000&#39;</span>
+                        teamList<span style="color: #666666">=</span>{}
+                        teamList[<span style="color: #4070a0">&#39;color&#39;</span>] <span style="color: #666666">=</span> color
+                        teamList[<span style="color: #4070a0">&#39;y&#39;</span>] <span style="color: #666666">=</span> acprpt
+			teamList[<span style="color: #4070a0">&#39;name&#39;</span>] <span style="color: #666666">=</span> team
+
+                        acprptmasterList<span style="color: #666666">.</span>append(teamList)
+
+
+<span style="color: #60a0b0; font-style: italic">################################</span>
+
+
+		<span style="color: #60a0b0; font-style: italic">#Close Connection</span>
+        	mariadb_connection<span style="color: #666666">.</span>close()
+
+                <span style="color: #007020; font-weight: bold">return</span> render_template(<span style="color: #4070a0">&#39;archiveMaster.html&#39;</span>, sdate<span style="color: #666666">=</span>sDate,edate<span style="color: #666666">=</span>eDate,ptptWatchdogs<span style="color: #666666">=</span>ptptWatchdogs,ptptSpattlecock<span style="color: #666666">=</span>ptptSpattlecock,ptptPorkchopexpress<span style="color: #666666">=</span>ptptPorkchopexpress,cptWatchdogs<span style="color: #666666">=</span>cptWatchdogs,cptSpattlecock<span style="color: #666666">=</span>cptSpattlecock,cptPorkchopexpress<span style="color: #666666">=</span>cptPorkchopexpress,ptplL1<span style="color: #666666">=</span>ptplL1,ptplL2<span style="color: #666666">=</span>ptplL2,cplL1<span style="color: #666666">=</span>cplL1,cplL2<span style="color: #666666">=</span>cplL2,cleader1Name<span style="color: #666666">=</span>cleader1Name,cleader1Calls<span style="color: #666666">=</span>cleader1Calls,cleader1Team<span style="color: #666666">=</span>cleader1Team,cleader2Name<span style="color: #666666">=</span>cleader2Name,cleader2Calls<span style="color: #666666">=</span>cleader2Calls,cleader2Team<span style="color: #666666">=</span>cleader2Team,cleader3Name<span style="color: #666666">=</span>cleader3Name,cleader3Calls<span style="color: #666666">=</span>cleader3Calls,cleader3Team<span style="color: #666666">=</span>cleader3Team,tleader1Name<span style="color: #666666">=</span>tleader1Name,tleader1Tickets<span style="color: #666666">=</span>tleader1Tickets,tleader1Team<span style="color: #666666">=</span>tleader1Team,tleader2Name<span style="color: #666666">=</span>tleader2Name,tleader2Tickets<span style="color: #666666">=</span>tleader2Tickets,tleader2Team<span style="color: #666666">=</span>tleader2Team,tleader3Name<span style="color: #666666">=</span>tleader3Name,tleader3Tickets<span style="color: #666666">=</span>tleader3Tickets,tleader3Team<span style="color: #666666">=</span>tleader3Team,tmasterList<span style="color: #666666">=</span>tmasterList,cmasterList<span style="color: #666666">=</span>cmasterList,atprptmasterList<span style="color: #666666">=</span>atprptmasterList,acprptmasterList<span style="color: #666666">=</span>acprptmasterList)
+
+
+
+
+
+
+<span style="color: #555555; font-weight: bold">@app.route</span>(<span style="color: #4070a0">&quot;/about&quot;</span>, methods<span style="color: #666666">=</span>[<span style="color: #4070a0">&#39;GET&#39;</span>])
+<span style="color: #007020; font-weight: bold">def</span> <span style="color: #06287e">about</span>():
+	<span style="color: #007020; font-weight: bold">return</span> render_template(<span style="color: #4070a0">&#39;about.html&#39;</span>)
+
+
+<span style="color: #007020; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #4070a0">&quot;__main__&quot;</span>:
+	app<span style="color: #666666">.</span>run(debug<span style="color: #666666">=</span><span style="color: #007020">False</span>,port<span style="color: #666666">=</span><span style="color: #40a070">5001</span>)
+	app<span style="color: #666666">.</span>run()
+</pre></div>
