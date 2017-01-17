@@ -4,5 +4,10 @@ A tool my team uses to track individual and team based performance per day. The 
 
 Application can be found here: https://stats.josephsciarappa.com/ but is IP restricted as it contains sensitive information
 
-
 Credit to HighCharts (http://www.highcharts.com/) for their Javascript graphs. Please Check HighCharts licensing information before use. 
+Credit to Bootstrap (http://getbootstrap.com/) for the basic CSS framework
+
+
+Example: 
+
+![alt tag](https://gitimages.josephsciarappa.com/stats_dashboard.png)
